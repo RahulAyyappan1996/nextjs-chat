@@ -37,7 +37,8 @@ import { Chat } from '@/lib/types'
 import { auth } from '@/auth'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || ''
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY || ''
 })
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
@@ -139,10 +140,10 @@ async function submitUserMessage(content: string) {
   })
 
   let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
-  let textNode: undefined | React.ReactNode
+  let textNode: React.ReactNode
 
   const ui = render({
-    model: 'gpt-3.5-turbo',
+    model: 'openai/gpt-3.5-turbo',
     provider: openai,
     initial: <SpinnerMessage />,
     messages: [
@@ -199,7 +200,7 @@ async function submitUserMessage(content: string) {
 
       return textNode
     },
-    functions: {
+    tools: {
       listStocks: {
         description: 'List three imaginary stocks that are trending.',
         parameters: z.object({
@@ -421,7 +422,7 @@ export const AI = createAI<AIState, UIState>({
   },
   initialUIState: [],
   initialAIState: { chatId: nanoid(), messages: [] },
-  unstable_onGetUIState: async () => {
+  onGetUIState: async () => {
     'use server'
 
     const session = await auth()
@@ -430,14 +431,14 @@ export const AI = createAI<AIState, UIState>({
       const aiState = getAIState()
 
       if (aiState) {
-        const uiState = getUIStateFromAIState(aiState)
+        const uiState = getUIStateFromAIState(aiState as AIState)
         return uiState
       }
     } else {
       return
     }
   },
-  unstable_onSetAIState: async ({ state, done }) => {
+  onSetAIState: async ({ state, done }) => {
     'use server'
 
     const session = await auth()
@@ -466,7 +467,7 @@ export const AI = createAI<AIState, UIState>({
   }
 })
 
-export const getUIStateFromAIState = (aiState: Chat) => {
+export const getUIStateFromAIState = (aiState: AIState) => {
   return aiState.messages
     .filter(message => message.role !== 'system')
     .map((message, index) => ({
