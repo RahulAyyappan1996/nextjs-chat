@@ -1,9 +1,9 @@
 'use client'
 
-import { useFormState, useFormStatus } from 'react-dom'
+import { useFormStatus } from 'react-dom'
 import { authenticate } from '@/app/login/actions'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { IconSpinner } from './ui/icons'
 import { getMessageFromCode } from '@/lib/utils'
@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 
 export default function LoginForm() {
   const router = useRouter()
-  const [result, dispatch] = useFormState(authenticate, undefined)
+  const [result, dispatch] = useActionState(authenticate, undefined)
 
   useEffect(() => {
     if (result) {
@@ -89,7 +89,7 @@ function LoginButton() {
   return (
     <button
       className="my-4 flex h-10 w-full flex-row items-center justify-center rounded-md bg-zinc-900 p-2 text-sm font-semibold text-zinc-100 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-      aria-disabled={pending}
+      disabled={pending}
     >
       {pending ? <IconSpinner /> : 'Log in'}
     </button>

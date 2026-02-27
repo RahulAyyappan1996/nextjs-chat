@@ -40,47 +40,61 @@ export function BotMessage({
         <IconOpenAI />
       </div>
       <div className="ml-4 flex-1 space-y-2 overflow-hidden px-1">
-        <MemoizedReactMarkdown
-          className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0"
-          remarkPlugins={[remarkGfm, remarkMath]}
-          components={{
-            p({ children }) {
-              return <p className="mb-2 last:mb-0">{children}</p>
-            },
-            code({ node, inline, className, children, ...props }) {
-              if (children.length) {
-                if (children[0] == '▍') {
+        <div className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
+          <MemoizedReactMarkdown
+            remarkPlugins={[remarkGfm, remarkMath]}
+            components={{
+              p({ children }) {
+                return <p className="mb-2 last:mb-0">{children}</p>
+              },
+              code({ node, className, children, ...props }) {
+                let childText = ''
+                if (Array.isArray(children)) {
+                  if (children[0] === '▍') {
+                    return (
+                      <span className="mt-1 cursor-default animate-pulse">▍</span>
+                    )
+                  }
+
+                  children[0] = (children[0] as string).replace('`▍`', '▍')
+                  childText = String(children[0])
+                } else if (typeof children === 'string') {
+                  if (children === '▍') {
+                    return (
+                      <span className="mt-1 cursor-default animate-pulse">▍</span>
+                    )
+                  }
+                  childText = (children as string).replace('`▍`', '▍')
+                }
+
+                const match = /language-(\w+)/.exec(className || '')
+
+                // `react-markdown` 9 removes the `inline` prop, but we can check if it's a block code
+                // block by seeing if it has a newline or language class
+                const isInline = !match && !childText.includes('\n')
+
+                if (isInline) {
                   return (
-                    <span className="mt-1 animate-pulse cursor-default">▍</span>
+                    <code className={className} {...props}>
+                      {children as string}
+                    </code>
                   )
                 }
 
-                children[0] = (children[0] as string).replace('`▍`', '▍')
-              }
-
-              const match = /language-(\w+)/.exec(className || '')
-
-              if (inline) {
                 return (
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
+                  <CodeBlock
+                    key={Math.random()}
+                    language={(match && match[1]) || ''}
+                    value={childText.replace(/\n$/, '')}
+                    {...props}
+                  />
                 )
               }
-
-              return (
-                <CodeBlock
-                  key={Math.random()}
-                  language={(match && match[1]) || ''}
-                  value={String(children).replace(/\n$/, '')}
-                  {...props}
-                />
-              )
-            }
-          }}
-        >
-          {text}
-        </MemoizedReactMarkdown>
+            }}
+          >
+            {text}
+          </MemoizedReactMarkdown>
+        </div>
       </div>
     </div>
   )
